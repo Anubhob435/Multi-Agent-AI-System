@@ -1,0 +1,6 @@
+[
+  {
+    "goal": "Find the next SpaceX launch, check weather at that location, and summarize if it may be delayed.",
+    "expected_keys": ["spacex", "weather", "summary"]
+  }
+]

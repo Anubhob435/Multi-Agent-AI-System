@@ -2,6 +2,9 @@
 
 import importlib
 from agents import planner
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def load_agent(name: str):
     return importlib.import_module(f"agents.{name}")
