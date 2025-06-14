@@ -35,10 +35,24 @@ class ChatInterface {
             }
         };
         this.currentAgent = null;
-        this.isTyping = false;
-        this.autoScroll = true;
+        this.isTyping = false;        this.autoScroll = true;
         
         this.init();
+        this.startUptime();
+    }
+
+    startUptime() {
+        this.startTime = Date.now();
+        setInterval(() => {
+            const uptimeElement = document.getElementById('uptime');
+            if (uptimeElement) {
+                const elapsed = Date.now() - this.startTime;
+                const hours = Math.floor(elapsed / 3600000);
+                const minutes = Math.floor((elapsed % 3600000) / 60000);
+                const seconds = Math.floor((elapsed % 60000) / 1000);
+                uptimeElement.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+        }, 1000);
     }
 
     init() {
@@ -60,25 +74,16 @@ class ChatInterface {
                 e.preventDefault();
                 this.sendMessage();
             }
-        });
-
-        // Auto-resize textarea
+        });        // Auto-resize textarea
         document.getElementById('chat-input').addEventListener('input', (e) => {
             this.autoResizeTextarea(e.target);
-        });
-
-        // Clear messages
-        document.getElementById('clear-chat')?.addEventListener('click', () => {
-            this.clearMessages();
         });
     }
 
     autoResizeTextarea(textarea) {
         textarea.style.height = 'auto';
         textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
-    }
-
-    renderAgents() {
+    }    renderAgents() {
         const agentList = document.getElementById('agent-list');
         agentList.innerHTML = '';
 
@@ -86,53 +91,57 @@ class ChatInterface {
             const agentCard = document.createElement('div');
             agentCard.className = 'agent-card';
             agentCard.innerHTML = `
-                <div class="flex items-center justify-between mb-2">
-                    <div class="flex items-center">
+                <div class="agent-header">
+                    <div class="agent-name">
                         <span class="agent-status ${agent.status}"></span>
-                        <span class="font-medium">${agent.name}</span>
+                        <span>${agent.name}</span>
                     </div>
-                    <span class="text-2xl">${agent.icon}</span>
+                    <span class="agent-icon">${agent.icon}</span>
                 </div>
-                <p class="text-sm opacity-80">${agent.description}</p>
+                <p class="agent-description">${agent.description}</p>
             `;
             
             agentCard.addEventListener('click', () => {
-                this.selectAgent(key);
+                this.selectAgent(key, agentCard);
             });
             
             agentList.appendChild(agentCard);
         });
     }
 
-    selectAgent(agentKey) {
+    selectAgent(agentKey, cardElement) {
         // Remove active class from all cards
         document.querySelectorAll('.agent-card').forEach(card => {
             card.classList.remove('active');
         });
         
         // Add active class to selected card
-        event.currentTarget.classList.add('active');
+        cardElement.classList.add('active');
         
         this.currentAgent = agentKey;
-        this.addSystemMessage(`Now focusing on ${this.agents[agentKey].name}. Ask specific questions about ${agentKey === 'spacex' ? 'SpaceX missions' : agentKey === 'weather' ? 'weather conditions' : 'summaries and analysis'}.`);
+        this.addSystemMessage(`🎯 Now focusing on ${this.agents[agentKey].name}. Ask specific questions about ${agentKey === 'spacex' ? 'SpaceX missions and launches' : agentKey === 'weather' ? 'weather conditions and forecasts' : agentKey === 'summary' ? 'summaries and analysis' : 'AI coordination and validation'}.`);
     }
 
     setupQuickActions() {
         const quickActions = [
-            'Find next SpaceX launch',
-            'Check weather at launch site',
-            'Analyze launch conditions',
-            'Get mission summary',
-            'Show raw data'
+            { text: '🚀 Find next SpaceX launch', icon: 'fas fa-rocket' },
+            { text: '🌤️ Check weather conditions', icon: 'fas fa-cloud-sun' },
+            { text: '📊 Analyze launch readiness', icon: 'fas fa-chart-line' },
+            { text: '📝 Get mission summary', icon: 'fas fa-file-alt' },
+            { text: '💾 Show raw data', icon: 'fas fa-database' }
         ];
 
         const quickActionsContainer = document.getElementById('quick-actions');
+        
+        // Keep the auto-scroll button
+        const autoScrollBtn = document.getElementById('auto-scroll-btn');
+        
         quickActions.forEach(action => {
             const button = document.createElement('button');
             button.className = 'quick-action';
-            button.textContent = action;
+            button.innerHTML = `<i class="${action.icon}"></i> ${action.text}`;
             button.addEventListener('click', () => {
-                document.getElementById('chat-input').value = action;
+                document.getElementById('chat-input').value = action.text.replace(/[🚀🌤️📊📝💾]\s/, '');
                 this.sendMessage();
             });
             quickActionsContainer.appendChild(button);
@@ -180,6 +189,11 @@ class ChatInterface {
             this.hideTyping();
             this.addMessage(`Network error: ${error.message}`, 'system');
         }
+   }
+
+    sendQuickMessage(message) {
+        document.getElementById('chat-input').value = message;
+        this.sendMessage();
     }
 
     processAgentResponse(data) {
@@ -225,24 +239,20 @@ class ChatInterface {
 
     addSystemMessage(content) {
         this.addMessage(content, 'system');
-    }
-
-    addJsonMessage(data, title = 'JSON Data') {
+    }    addJsonMessage(data, title = 'JSON Data') {
         const jsonContent = `
             <div class="json-viewer">
-                <div class="flex justify-between items-center mb-2">
+                <div class="json-header">
                     <strong>${title}</strong>
                     <button onclick="copyToClipboard('${JSON.stringify(data).replace(/'/g, "\\'")}', this)" class="message-action">
-                        <i class="fas fa-copy"></i> Copy
+                        <i class="fas fa-copy"></i> Copy JSON
                     </button>
                 </div>
                 <pre>${JSON.stringify(data, null, 2)}</pre>
             </div>
         `;
         this.addMessage(jsonContent, 'system');
-    }
-
-    renderMessage(message) {
+    }renderMessage(message) {
         const messagesContainer = document.getElementById('chat-messages');
         const messageElement = document.createElement('div');
         messageElement.className = `message ${message.type}`;
@@ -257,7 +267,9 @@ class ChatInterface {
                 ${avatar}
             </div>
             <div class="message-content">
-                <div class="message-text">${message.content}</div>
+                <div class="message-bubble">
+                    <div class="message-text">${message.content}</div>
+                </div>
                 <div class="message-meta">
                     <span>${senderName}</span>
                     <span>•</span>
@@ -265,11 +277,11 @@ class ChatInterface {
                 </div>
                 <div class="message-actions">
                     <button class="message-action" onclick="copyMessage('${message.id}')">
-                        <i class="fas fa-copy"></i>
+                        <i class="fas fa-copy"></i> Copy
                     </button>
                     ${message.type !== 'user' ? `
                         <button class="message-action" onclick="regenerateResponse('${message.id}')">
-                            <i class="fas fa-redo"></i>
+                            <i class="fas fa-redo"></i> Retry
                         </button>
                     ` : ''}
                 </div>
@@ -277,6 +289,11 @@ class ChatInterface {
         `;
 
         messagesContainer.appendChild(messageElement);
+        
+        // Animate message appearance
+        setTimeout(() => {
+            messageElement.style.opacity = '1';
+        }, 50);
     }
 
     showTyping() {
@@ -403,6 +420,12 @@ document.addEventListener('DOMContentLoaded', () => {
 function toggleAutoScroll() {
     chatInterface.autoScroll = !chatInterface.autoScroll;
     const button = document.getElementById('auto-scroll-btn');
-    button.textContent = chatInterface.autoScroll ? 'Auto-scroll: ON' : 'Auto-scroll: OFF';
-    button.className = chatInterface.autoScroll ? 'quick-action active' : 'quick-action';
+    
+    if (chatInterface.autoScroll) {
+        button.innerHTML = '<i class="fas fa-arrows-alt-v"></i><span>Auto-scroll</span>';
+        button.classList.add('active');
+    } else {
+        button.innerHTML = '<i class="fas fa-hand-paper"></i><span>Manual scroll</span>';
+        button.classList.remove('active');
+    }
 }
