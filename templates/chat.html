@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 Multi-Agent AI Chat</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='chat.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="chat-container">
+        <!-- Chat Header -->
+        <div class="chat-header">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <i class="fas fa-brain mr-3 text-2xl"></i>
+                    <div>
+                        <h1 class="text-xl font-bold">Multi-Agent AI System</h1>
+                        <p class="text-sm opacity-80">Intelligent agent coordination platform</p>
+                    </div>
+                </div>                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2 text-sm">
+                        <div class="agent-status online"></div>
+                        <span>System Online</span>
+                    </div>
+                    <a href="/" class="quick-action">
+                        <i class="fas fa-tachometer-alt mr-1"></i>
+                        Dashboard
+                    </a>
+                    <button onclick="chatInterface.exportChat()" class="quick-action">
+                        <i class="fas fa-download mr-1"></i>
+                        Export Chat
+                    </button>
+                    <button id="clear-chat" class="quick-action">
+                        <i class="fas fa-trash mr-1"></i>
+                        Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Main Area -->
+        <div class="chat-main">
+            <!-- Sidebar with Agents -->
+            <div class="chat-sidebar">
+                <div class="p-4 border-b border-white border-opacity-20">
+                    <h3 class="text-white font-semibold mb-2">Available Agents</h3>
+                    <p class="text-xs text-white text-opacity-70">Click on an agent to focus interactions</p>
+                </div>
+                <div id="agent-list" class="agent-list"></div>
+                
+                <!-- System Status -->
+                <div class="p-4 border-t border-white border-opacity-20">
+                    <div class="text-xs text-white text-opacity-60">
+                        <div class="flex justify-between mb-1">
+                            <span>System Status:</span>
+                            <span class="text-green-400">Operational</span>
+                        </div>
+                        <div class="flex justify-between mb-1">
+                            <span>Active Agents:</span>
+                            <span>4/4</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Response Time:</span>
+                            <span class="text-cyan-400">~2.3s</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Area -->
+            <div class="chat-area">
+                <!-- Messages Container -->
+                <div id="chat-messages" class="chat-messages">
+                    <!-- Messages will be dynamically added here -->
+                </div>
+
+                <!-- Typing Indicator -->
+                <div id="typing-indicator" class="typing-indicator">
+                    <div class="message-avatar">
+                        🤖
+                    </div>
+                    <div class="typing-dots">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+
+                <!-- Chat Input Area -->
+                <div class="chat-input-area">
+                    <!-- Quick Actions -->
+                    <div id="quick-actions" class="quick-actions">
+                        <!-- Quick action buttons will be added here -->
+                        <button id="auto-scroll-btn" onclick="toggleAutoScroll()" class="quick-action active">
+                            Auto-scroll: ON
+                        </button>
+                    </div>
+
+                    <!-- Input Container -->
+                    <div class="chat-input-container">
+                        <textarea 
+                            id="chat-input" 
+                            class="chat-input" 
+                            placeholder="Ask me about SpaceX launches, weather conditions, or any multi-agent task..."
+                            rows="1"></textarea>
+                        <button id="send-button" class="send-button">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+
+                    <!-- Input Help Text -->
+                    <div class="text-xs text-white text-opacity-60 mt-2 text-center">
+                        Press Enter to send • Shift+Enter for new line • Use quick actions above for common tasks
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='chat.js') }}"></script>
+</body>
+</html>

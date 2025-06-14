@@ -44,6 +44,91 @@ def index():
     """Main dashboard page"""
     return render_template('index.html')
 
+@app.route('/chat')
+def chat():
+    """Chat interface page"""
+    return render_template('chat.html')
+
+@app.route('/api/chat', methods=['POST'])
+def api_chat():
+    """API endpoint for chat interface"""
+    try:
+        data = request.json
+        message = data.get('message', '')
+        agent = data.get('agent', None)
+        
+        if not message:
+            return jsonify({'error': 'Message is required'}), 400
+        
+        # Clear previous logs and add start message
+        terminal_capture.logs.clear()
+        terminal_capture.write(f"💬 Chat: {message}")
+        
+        if agent:
+            terminal_capture.write(f"🎯 Focusing on agent: {agent}")
+        
+        terminal_capture.write("=" * 60)
+        
+        # Capture stdout/stderr while running the goal
+        old_stdout = sys.stdout
+        old_stderr = sys.stderr
+        
+        try:
+            # Redirect output to our capture
+            sys.stdout = terminal_capture
+            sys.stderr = terminal_capture
+            
+            # Run the goal/message as a task
+            result = run_goal(message)
+            
+            terminal_capture.write("=" * 60)
+            terminal_capture.write("✅ Task completed successfully!")
+            
+        finally:
+            # Restore original stdout/stderr
+            sys.stdout = old_stdout
+            sys.stderr = old_stderr
+        
+        # Process logs to extract agent-specific information
+        workflow_logs = []
+        for log in terminal_capture.logs:
+            log_msg = log['message']
+            agent_type = None
+            
+            # Detect which agent is speaking
+            if 'spacex' in log_msg.lower() or '🚀' in log_msg:
+                agent_type = 'spacex'
+            elif 'weather' in log_msg.lower() or '🌍' in log_msg:
+                agent_type = 'weather'
+            elif 'summary' in log_msg.lower() or '📝' in log_msg:
+                agent_type = 'summary'
+            elif 'adk' in log_msg.lower() or '🧠' in log_msg:
+                agent_type = 'google_adk'
+            
+            workflow_logs.append({
+                'message': log_msg,
+                'timestamp': log['timestamp'],
+                'agent': agent_type
+            })
+        
+        return jsonify({
+            'success': True,
+            'result': {
+                'summary': result.get('summary', 'Task completed successfully!'),
+                'raw_data': result
+            },
+            'workflow_logs': workflow_logs,
+            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S')
+        })
+        
+    except Exception as e:
+        terminal_capture.write(f"❌ Error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'workflow_logs': [{'message': f'Error: {str(e)}', 'timestamp': time.strftime('%H:%M:%S'), 'agent': None}]
+        }), 500
+
 @app.route('/api/run_goal', methods=['POST'])
 def api_run_goal():
     """API endpoint to run a goal"""

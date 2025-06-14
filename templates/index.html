@@ -2,11 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🧠 Multi-Agent AI System Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <title>🧠 Multi-Agent AI System Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .flex { display: flex; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .space-x-4 > * + * { margin-left: 1rem; }
+        .space-x-2 > * + * { margin-left: 0.5rem; }
+    </style>
 </head>
 <body class="bg-gray-50 min-h-screen">    <div x-data="agentSystem()" class="h-screen flex">
         <!-- Main Interface - Full Height Layout -->
@@ -136,12 +142,15 @@
                                 Multi-Agent AI System
                             </h1>
                             <p class="text-gray-600 mt-2">Google ADK-powered intelligent agent coordination</p>
-                        </div>
-                        <div class="flex items-center space-x-4">
+                        </div>                        <div class="flex items-center space-x-4">
                             <div class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
                                 <i class="fas fa-circle text-green-500 mr-1"></i>
                                 System Active
                             </div>
+                            <a href="/chat" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                                <i class="fas fa-comments mr-2"></i>
+                                Chat Interface
+                            </a>
                             <button @click="loadStatus()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                                 <i class="fas fa-sync-alt mr-2"></i>
                                 Refresh Status
