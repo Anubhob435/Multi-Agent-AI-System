@@ -72,6 +72,9 @@ Build a multi-agent AI system that:
 - **Summary Agent:**  
   Evaluates wind, cloud cover, etc. → Summarizes delay risk.
 
+- **News Agent**
+  Gets News.
+  
 ### Phase 3: Enrichment and Routing
 
 - Each agent takes previous output as input.
