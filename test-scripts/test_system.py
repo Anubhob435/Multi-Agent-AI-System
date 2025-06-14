@@ -3,7 +3,7 @@
 
 import os
 import sys
-sys.path.append('.')
+sys.path.append('..')  # Add parent directory to path for imports
 
 from main import run_goal
 

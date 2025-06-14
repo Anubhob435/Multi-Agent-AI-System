@@ -2,7 +2,8 @@
 # Quick and easy way to test individual agents
 
 import sys
-sys.path.append('.')
+import os
+sys.path.append('..')  # Add parent directory to path for imports
 
 def quick_test():
     """Quick interactive agent testing"""

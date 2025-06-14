@@ -1,6 +1,10 @@
 # automated_evaluation.py
 # Comprehensive evaluation system for the Multi-Agent AI System
 
+import sys
+import os
+sys.path.append('..')  # Add parent directory to path for imports
+
 import json
 import time
 from main import run_goal

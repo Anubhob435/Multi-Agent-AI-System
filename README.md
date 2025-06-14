@@ -78,10 +78,27 @@ GOOGLE_GENAI_USE_VERTEXAI=FALSE
 ```bash
 # Interactive mode
 python main.py
+```
 
-# Automated testing
+### 5. Testing & Validation
+All testing scripts are organized in the `test-scripts/` directory:
+
+```bash
+# Quick interactive testing
+cd test-scripts
+python quick_agent_test.py
+
+# Comprehensive test suite
+python test_individual_agents.py
+
+# End-to-end workflow testing
+python test_enhanced_workflow.py
+
+# Automated evaluation
 python automated_evaluation.py
 ```
+
+See `test-scripts/README.md` for detailed testing documentation.
 
 ---
 
@@ -126,9 +143,15 @@ Multi-Agent-AI-System/
 ├── evals/
 │   ├── test_goals.json         # Test scenarios
 │   └── evaluation_results_*.json  # Test results
+├── test-scripts/               # All testing and evaluation scripts
+│   ├── quick_agent_test.py     # Interactive agent testing
+│   ├── test_individual_agents.py  # Comprehensive test suite
+│   ├── test_enhanced_workflow.py  # Workflow testing
+│   ├── test_system.py          # Quick system test
+│   ├── test_langchain_integration.py  # LangChain/Gemini testing
+│   ├── automated_evaluation.py  # Testing framework
+│   └── README.md              # Testing documentation
 ├── main.py                     # Main application
-├── automated_evaluation.py     # Testing framework
-├── test_system.py             # Quick system test
 ├── requirements.txt           # Dependencies
 ├── .env.example              # Environment template
 └── README.md                 # This file

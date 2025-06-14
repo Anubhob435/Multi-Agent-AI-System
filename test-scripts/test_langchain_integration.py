@@ -1,7 +1,10 @@
 # test_langchain_integration.py
 # Test script to verify LangChain integration with Google ADK Agent
 
+import sys
 import os
+sys.path.append('..')  # Add parent directory to path for imports
+
 from dotenv import load_dotenv
 
 # Load environment variables

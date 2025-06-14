@@ -3,7 +3,8 @@
 
 import sys
 import time
-sys.path.append('.')
+import os
+sys.path.append('..')  # Add parent directory to path for imports
 
 def test_spacex_agent():
     """Test SpaceX agent individually"""

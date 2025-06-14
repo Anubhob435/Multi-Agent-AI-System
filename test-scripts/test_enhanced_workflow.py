@@ -1,6 +1,10 @@
 # test_enhanced_workflow.py
 # Test script to demonstrate the enhanced Gemini-first workflow
 
+import sys
+import os
+sys.path.append('..')  # Add parent directory to path for imports
+
 from main import run_goal
 import time
 
