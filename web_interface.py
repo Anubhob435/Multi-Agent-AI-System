@@ -5,9 +5,11 @@ from flask import Flask, render_template, request, jsonify, stream_template
 import json
 import time
 from main import run_goal
+import sys
+import os
+sys.path.append('test-scripts')  # Add test-scripts directory to path
 from automated_evaluation import AgentSystemEvaluator
 import io
-import sys
 from contextlib import redirect_stdout, redirect_stderr
 
 app = Flask(__name__)

@@ -3,7 +3,11 @@
 
 import sys
 import os
-sys.path.append('..')  # Add parent directory to path for imports
+import importlib
+
+# Add parent directory to path for imports
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, parent_dir)
 
 def quick_test():
     """Quick interactive agent testing"""
@@ -17,7 +21,8 @@ def quick_test():
         "3": "summary_agent",
         "4": "google_adk_agent",
         "5": "calculator_agent",
-        "6": "dictionary_agent"
+        "6": "dictionary_agent",
+        "7": "news_agent"
     }
     
     print("Select an agent to test:")
@@ -25,7 +30,7 @@ def quick_test():
         print(f"  {key}. {name}")
     print("  0. Test all agents")
     
-    choice = input("\nEnter choice (0-6): ").strip()
+    choice = input("\nEnter choice (0-7): ").strip()
     
     if choice == "0":
         test_all_agents()
@@ -34,14 +39,14 @@ def quick_test():
     else:
         print("Invalid choice!")
 
-def test_single_agent(agent_name):
+def test_single_agent(agent_name: str):
     """Test a single agent"""
     print(f"\n🧪 Testing {agent_name}")
     print("-" * 30)
     
     try:
         if agent_name == "spacex_agent":
-            from agents import spacex_agent
+            spacex_agent = importlib.import_module("agents.spacex_agent")
             result = spacex_agent.run({"goal": "Get SpaceX data"})
             
             print(f"🔍 Keys returned: {list(result.keys())}")
@@ -63,14 +68,16 @@ def test_single_agent(agent_name):
                 print(f"   Available keys: {list(result.keys())}")
                 
         elif agent_name == "weather_agent":
-            from agents import weather_agent
+            weather_agent = importlib.import_module("agents.weather_agent")
+            
+            # Test data with coordinates
             test_data = {
                 "goal": "Get weather",
                 "spacex": {
                     "coordinates": {
-                        "latitude": 28.6080585,
-                        "longitude": -80.6039558,
-                        "name": "KSC LC 39A"
+                        "latitude": 28.6,
+                        "longitude": -80.6,
+                        "name": "Kennedy Space Center"
                     }
                 }
             }
@@ -79,78 +86,45 @@ def test_single_agent(agent_name):
             print(f"🔍 Keys returned: {list(result.keys())}")
             
             if "weather" in result:
-                weather = result["weather"]
-                print(f"✅ Temperature: {weather.get('temperature', 'No data')}°F")
-                print(f"💨 Wind: {weather.get('wind_speed', 'No data')} mph")
-                print(f"☁️ Clouds: {weather.get('clouds', 'No data')}%")
-                print(f"💧 Humidity: {weather.get('humidity', 'No data')}%")
+                weather_data = result["weather"]
+                if weather_data.get("success"):
+                    print(f"✅ Location: {weather_data.get('location', 'Unknown')}")
+                    print(f"🌡️  Temperature: {weather_data.get('temperature', 'N/A')}°F")
+                    print(f"☁️  Condition: {weather_data.get('condition', 'N/A')}")
+                    print(f"💨 Wind: {weather_data.get('wind_speed', 'N/A')} mph")
+                    print(f"💧 Humidity: {weather_data.get('humidity', 'N/A')}%")
+                else:
+                    print(f"⚠️ Weather failed: {weather_data.get('error', 'Unknown error')}")
             else:
                 print("⚠️ No weather data returned")
                 print(f"   Available keys: {list(result.keys())}")
                 
-        elif agent_name == "summary_agent":
-            from agents import summary_agent
-            
-            user_input = input("Enter message for summary agent (or press Enter for 'hi'): ").strip()
-            if not user_input:
-                user_input = "hi"
-                
-            result = summary_agent.run({"goal": user_input})
-            
-            print(f"🔍 Keys returned: {list(result.keys())}")
-            
-            if "summary" in result:
-                summary_text = result['summary']
-                print(f"✅ Response: {summary_text[:200]}{'...' if len(summary_text) > 200 else ''}")
-            else:
-                print("⚠️ No summary generated")
-                print(f"   Available keys: {list(result.keys())}")
-                
-        elif agent_name == "google_adk_agent":
-            from agents.google_adk_agent import GoogleADKCoordinator
-            
-            adk = GoogleADKCoordinator()
-            
-            # Test planning
-            test_goal = input("Enter goal for planning (or press Enter for default): ").strip()
-            if not test_goal:
-                test_goal = "get spacex and weather data"
-                
-            sequence = adk.plan_agent_sequence(test_goal)
-            print(f"✅ Planned sequence: {sequence}")
-            
         elif agent_name == "calculator_agent":
-            from agents import calculator_agent
+            calculator_agent = importlib.import_module("agents.calculator_agent")
             
-            calc_input = input("Enter calculation (or press Enter for '2 + 3'): ").strip()
-            if not calc_input:
-                calc_input = "calculate 2 + 3"
+            expression_input = input("Enter calculation (or press Enter for '2 + 3 * 4'): ").strip()
+            if not expression_input:
+                expression_input = "calculate 2 + 3 * 4"
                 
-            result = calculator_agent.run({"goal": calc_input})
+            result = calculator_agent.run({"goal": expression_input})
             
             print(f"🔍 Keys returned: {list(result.keys())}")
             
             if "calculation" in result:
-                calculation = result["calculation"]
-                if calculation.get("success"):
-                    calculations = calculation.get("calculations", [])
-                    if calculations:
-                        print("✅ Calculation Results:")
-                        for calc in calculations:
-                            if calc.get("success"):
-                                print(f"  📊 {calc['expression']} = {calc['result']}")
-                            else:
-                                print(f"  ❌ {calc['expression']}: {calc.get('error', 'Unknown error')}")
-                    else:
-                        print("✅ Calculation completed")
+                calc_data = result["calculation"]
+                if calc_data.get("success"):
+                    expression = calc_data.get("expression", "")
+                    result_value = calc_data.get("result", "")
+                    print(f"✅ Expression: {expression}")
+                    print(f"🔢 Result: {result_value}")
                 else:
-                    print(f"⚠️ Calculation failed: {calculation.get('error', 'Unknown error')}")
+                    print(f"⚠️ Calculation failed: {calc_data.get('error', 'Unknown error')}")
             else:
                 print("⚠️ No calculation data returned")
                 print(f"   Available keys: {list(result.keys())}")
                 
         elif agent_name == "dictionary_agent":
-            from agents import dictionary_agent
+            dictionary_agent = importlib.import_module("agents.dictionary_agent")
             
             word_input = input("Enter word to define (or press Enter for 'serendipity'): ").strip()
             if not word_input:
@@ -196,6 +170,56 @@ def test_single_agent(agent_name):
             else:
                 print("⚠️ No definition data returned")
                 print(f"   Available keys: {list(result.keys())}")
+                
+        elif agent_name == "news_agent":
+            news_agent = importlib.import_module("agents.news_agent")
+            
+            topic_input = input("Enter news topic (or press Enter for 'technology'): ").strip()
+            if not topic_input:
+                topic_input = "get latest technology news"
+                
+            result = news_agent.run({"goal": topic_input})
+            
+            print(f"🔍 Keys returned: {list(result.keys())}")
+            
+            if "news" in result:
+                news_data = result["news"]
+                if news_data.get("success"):
+                    topic = news_data.get("topic", "")
+                    articles = news_data.get("articles", [])
+                    print(f"✅ Found {len(articles)} articles for '{topic}'")
+                    
+                    if articles:
+                        # Show first article
+                        first_article = articles[0]
+                        print(f"📰 Latest: {first_article.get('title', 'No title')}")
+                        print(f"📝 {first_article.get('description', 'No description')[:100]}...")
+                        print(f"📰 Source: {first_article.get('source', 'Unknown')}")
+                    else:
+                        print(f"⚠️ No articles found for '{topic}'")
+                else:
+                    print(f"⚠️ News search failed: {news_data.get('error', 'Unknown error')}")
+            else:
+                print("⚠️ No news data returned")
+                print(f"   Available keys: {list(result.keys())}")
+                
+        elif agent_name == "summary_agent":
+            summary_agent = importlib.import_module("agents.summary_agent")
+            result = summary_agent.run({"goal": "test summary"})
+            
+            print(f"🔍 Keys returned: {list(result.keys())}")
+            
+            if "summary" in result:
+                print(f"✅ Summary: {result['summary']}")
+            else:
+                print("⚠️ No summary data returned")
+                print(f"   Available keys: {list(result.keys())}")
+                
+        elif agent_name == "google_adk_agent":
+            google_adk_agent = importlib.import_module("agents.google_adk_agent")
+            coordinator = google_adk_agent.GoogleADKCoordinator()
+            sequence = coordinator.plan_agent_sequence("test goal")
+            print(f"✅ Agent sequence: {sequence}")
 
     except Exception as e:
         print(f"❌ Error: {e}")
@@ -204,6 +228,7 @@ def test_single_agent(agent_name):
 
 def test_all_agents():
     """Test all agents quickly"""
+    
     print("\n🔄 Testing All Agents")
     print("=" * 30)
     
@@ -215,6 +240,7 @@ def test_all_agents():
         }),
         ("Calculator", "agents.calculator_agent", {"goal": "calculate 2 + 3"}),
         ("Dictionary", "agents.dictionary_agent", {"goal": "define test"}),
+        ("News", "agents.news_agent", {"goal": "get latest technology news"}),
         ("Summary", "agents.summary_agent", {"goal": "hi"}),
     ]
     
@@ -222,7 +248,7 @@ def test_all_agents():
     
     for name, module_name, test_data in agents:
         try:
-            module = __import__(module_name, fromlist=[module_name.split('.')[-1]])
+            module = importlib.import_module(module_name)
             result = module.run(test_data)
             print(f"✅ {name}: OK")
             results.append(True)
@@ -232,8 +258,8 @@ def test_all_agents():
     
     # Test ADK separately
     try:
-        from agents.google_adk_agent import GoogleADKCoordinator
-        adk = GoogleADKCoordinator()
+        google_adk_agent = importlib.import_module("agents.google_adk_agent")
+        adk = google_adk_agent.GoogleADKCoordinator()
         sequence = adk.plan_agent_sequence("test goal")
         print(f"✅ Google ADK: OK")
         results.append(True)

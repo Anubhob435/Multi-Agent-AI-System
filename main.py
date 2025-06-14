@@ -121,6 +121,26 @@ def extract_agent_output(agent_name: str, current_data: dict, previous_data: dic
         else:
             return f"📖 Dictionary Agent: {definition.get('error', 'No definition found')}"
 
+    elif agent_name == "news_agent":
+        news = current_data.get("news", {})
+        if news.get("success"):
+            topic = news.get("topic", "")
+            articles = news.get("articles", [])
+            if articles:
+                output = f"📰 Latest News: {topic}\n"
+                # Show first 2 articles in summary
+                for i, article in enumerate(articles[:2], 1):
+                    title = article.get('title', 'No title')
+                    source = article.get('source', 'Unknown')
+                    output += f"• {title} ({source})\n"
+                if len(articles) > 2:
+                    output += f"• ... and {len(articles) - 2} more articles"
+                return output.strip()
+            else:
+                return f"📰 News Agent: Found news for '{topic}'"
+        else:
+            return f"📰 News Agent: {news.get('error', 'No news found')}"
+
     else:
         # Generic output for unknown agents
         new_keys = set(current_data.keys()) - set(previous_data.keys())
@@ -134,7 +154,8 @@ def extract_agent_output(agent_name: str, current_data: dict, previous_data: dic
 
 def run_goal(user_goal: str):
     print(f"📝 Processing request: '{user_goal}'")
-      # Step 1: Use Gemini to determine appropriate agents
+    
+    # Step 1: Use Gemini to determine appropriate agents
     print("\n🧠 Step 1: Consulting Gemini for agent selection...")
     
     agent_selection_prompt = """You are an intelligent agent coordinator for a multi-agent AI system.
@@ -144,25 +165,29 @@ def run_goal(user_goal: str):
     - weather_agent: Gets weather data for specific locations (especially launch sites)
     - calculator_agent: Performs mathematical calculations and solves equations
     - dictionary_agent: Provides word definitions, meanings, and synonyms
+    - news_agent: Fetches relevant news articles and current headlines
     - summary_agent: For conversational responses, greetings, and general questions
     
     Based on the user's request, determine which agents are needed. Consider:
     - For greetings/conversations: only summary_agent
     - For calculations/math (keywords: calculate, compute, solve, math): calculator_agent, summary_agent
     - For definitions (keywords: define, meaning, what is): dictionary_agent, summary_agent
+    - For news/headlines (keywords: news, article, headlines, latest): news_agent, summary_agent
     - For SpaceX info only: spacex_agent, summary_agent  
     - For weather only: weather_agent, summary_agent
     - For SpaceX + weather analysis: spacex_agent, weather_agent, summary_agent
+    - For SpaceX + news: spacex_agent, news_agent, summary_agent
     
     Respond with ONLY a comma-separated list of agent names in execution order.
     Example: spacex_agent, weather_agent, summary_agent"""
     
     gemini_response = get_gemini_response(user_goal, agent_selection_prompt, temperature=0.3)
     
-    if gemini_response:
-        # Parse agent sequence from Gemini response
-        sequence = [agent.strip() for agent in gemini_response.strip().split(',')]        # Validate agent names
-        valid_agents = ["spacex_agent", "weather_agent", "calculator_agent", "dictionary_agent", "summary_agent"]
+    if gemini_response:        # Parse agent sequence from Gemini response
+        sequence = [agent.strip() for agent in gemini_response.strip().split(',')]
+        
+        # Validate agent names
+        valid_agents = ["spacex_agent", "weather_agent", "calculator_agent", "dictionary_agent", "news_agent", "summary_agent"]
         sequence = [agent for agent in sequence if agent in valid_agents]
         
         if not sequence:
