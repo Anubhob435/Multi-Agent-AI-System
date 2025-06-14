@@ -22,17 +22,21 @@ def run_goal(user_goal: str):
         print(f"🧠 Basic Planner decided the sequence: {sequence}")
     
     data = {"goal": user_goal}
+    print(f"📋 Starting execution with {len(sequence)} agents")
 
-    for agent_name in sequence:
+    for i, agent_name in enumerate(sequence, 1):
+        print(f"🔄 [{i}/{len(sequence)}] Executing {agent_name}...")
         agent = load_agent(agent_name)
         data = agent.run(data)
-        print(f"✅ {agent_name} output: {data}")
+        print(f"✅ {agent_name} completed successfully")
 
     # Add Google ADK validation at the end
     try:
+        print("🔍 Running Google ADK validation...")
         adk_agent = load_agent("google_adk_agent")
         data = adk_agent.run(data)
-        print(f"🔍 Google ADK Validation: {data.get('adk_validation', {})}")
+        validation = data.get('adk_validation', {})
+        print(f"� ADK Validation - Confidence: {validation.get('confidence', 0)}%, Quality: {validation.get('quality_score', 0)}%")
     except Exception as e:
         print(f"⚠️ ADK validation failed: {e}")
 
