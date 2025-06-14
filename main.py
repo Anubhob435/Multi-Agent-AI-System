@@ -43,15 +43,15 @@ def extract_agent_output(agent_name: str, current_data: dict, previous_data: dic
     Extract and format the specific output from each agent
     """
     if agent_name == "spacex_agent":
-        spacex_data = current_data.get("spacex_data", {})
+        spacex_data = current_data.get("spacex", {})
         if spacex_data:
-            next_launch = spacex_data.get("next_launch", {})
+            coordinates = spacex_data.get('coordinates', {})
+            coord_str = f"{coordinates.get('name', 'Unknown')} ({coordinates.get('latitude', 'N/A')}, {coordinates.get('longitude', 'N/A')})" if coordinates else 'N/A'
             return f"""🚀 SpaceX Data Retrieved:
-• Mission: {next_launch.get('name', 'Unknown')}
-• Date: {next_launch.get('date', 'TBD')}
-• Rocket: {next_launch.get('rocket', 'Unknown')}
-• Launch Pad: {next_launch.get('launchpad', 'Unknown')}
-• Coordinates: {spacex_data.get('coordinates', 'N/A')}"""
+• Mission: {spacex_data.get('mission', 'Unknown')}
+• Date: {spacex_data.get('date', 'TBD')}
+• Launchpad ID: {spacex_data.get('launchpad_id', 'Unknown')}
+• Location: {coord_str}"""
         else:
             return "🚀 SpaceX Agent: No launch data retrieved"
     
@@ -86,6 +86,41 @@ def extract_agent_output(agent_name: str, current_data: dict, previous_data: dic
         else:
             return "🧠 ADK Agent: No validation data generated"
     
+    elif agent_name == "calculator_agent":
+        calculation = current_data.get("calculation", {})
+        if calculation.get("success"):
+            calculations = calculation.get("calculations", [])
+            if calculations:
+                output = "🧮 Calculation Results:\n"
+                for calc in calculations:
+                    if calc.get("success"):
+                        output += f"• {calc['expression']} = {calc['result']}\n"
+                    else:
+                        output += f"• {calc['expression']}: Error - {calc.get('error', 'Unknown')}\n"
+                return output.strip()
+            else:
+                return "🧮 Calculator Agent: Calculation completed"
+        else:
+            return f"🧮 Calculator Agent: {calculation.get('error', 'No calculation performed')}"
+    
+    elif agent_name == "dictionary_agent":
+        definition = current_data.get("definition", {})
+        if definition.get("success"):
+            word = definition.get("word", "")
+            definitions = definition.get("definitions", [])
+            if definitions and len(definitions) > 0:
+                # Get first definition for summary
+                first_def = definitions[0]
+                meanings = first_def.get("meanings", [])
+                if meanings:
+                    first_meaning = meanings[0].get("definitions", [])
+                    if first_meaning:
+                        def_text = first_meaning[0].get("definition", "")
+                        return f"📖 Definition of '{word.upper()}':\n{def_text}"
+            return f"📖 Dictionary Agent: Definition found for '{word}'"
+        else:
+            return f"📖 Dictionary Agent: {definition.get('error', 'No definition found')}"
+
     else:
         # Generic output for unknown agents
         new_keys = set(current_data.keys()) - set(previous_data.keys())
@@ -99,8 +134,7 @@ def extract_agent_output(agent_name: str, current_data: dict, previous_data: dic
 
 def run_goal(user_goal: str):
     print(f"📝 Processing request: '{user_goal}'")
-    
-    # Step 1: Use Gemini to determine appropriate agents
+      # Step 1: Use Gemini to determine appropriate agents
     print("\n🧠 Step 1: Consulting Gemini for agent selection...")
     
     agent_selection_prompt = """You are an intelligent agent coordinator for a multi-agent AI system.
@@ -108,10 +142,14 @@ def run_goal(user_goal: str):
     Available agents:
     - spacex_agent: Gets SpaceX launch data, schedules, and mission information
     - weather_agent: Gets weather data for specific locations (especially launch sites)
+    - calculator_agent: Performs mathematical calculations and solves equations
+    - dictionary_agent: Provides word definitions, meanings, and synonyms
     - summary_agent: For conversational responses, greetings, and general questions
     
     Based on the user's request, determine which agents are needed. Consider:
     - For greetings/conversations: only summary_agent
+    - For calculations/math (keywords: calculate, compute, solve, math): calculator_agent, summary_agent
+    - For definitions (keywords: define, meaning, what is): dictionary_agent, summary_agent
     - For SpaceX info only: spacex_agent, summary_agent  
     - For weather only: weather_agent, summary_agent
     - For SpaceX + weather analysis: spacex_agent, weather_agent, summary_agent
@@ -123,9 +161,8 @@ def run_goal(user_goal: str):
     
     if gemini_response:
         # Parse agent sequence from Gemini response
-        sequence = [agent.strip() for agent in gemini_response.strip().split(',')]
-        # Validate agent names
-        valid_agents = ["spacex_agent", "weather_agent", "summary_agent"]
+        sequence = [agent.strip() for agent in gemini_response.strip().split(',')]        # Validate agent names
+        valid_agents = ["spacex_agent", "weather_agent", "calculator_agent", "dictionary_agent", "summary_agent"]
         sequence = [agent for agent in sequence if agent in valid_agents]
         
         if not sequence:

@@ -47,15 +47,18 @@ class GoogleADKCoordinator:
         system_message = SystemMessage(
             content="""You are an intelligent agent planner for a multi-agent AI system. 
             Given a user goal, determine the optimal sequence of specialized agents to achieve it.
-            
-            Available agents:
+              Available agents:
             - spacex_agent: Gets SpaceX launch data and coordinates
             - weather_agent: Gets weather data for specific coordinates
+            - calculator_agent: Performs mathematical calculations and solves equations
+            - dictionary_agent: Provides word definitions, meanings, and synonyms
             - summary_agent: Analyzes data and provides conclusions
             - news_agent: Gets relevant news articles (if needed)
             
             Rules:
             - For greetings or simple questions, use only: summary_agent
+            - For calculations/math (keywords: calculate, compute, solve, math): calculator_agent, summary_agent
+            - For definitions (keywords: define, meaning, what is): dictionary_agent, summary_agent
             - For SpaceX + weather requests: spacex_agent, weather_agent, summary_agent
             - For SpaceX only: spacex_agent, summary_agent
             - For weather only: weather_agent, summary_agent
@@ -66,8 +69,7 @@ class GoogleADKCoordinator:
         
         human_message = HumanMessage(
             content=f"User Goal: \"{user_goal}\"\n\nProvide the optimal agent sequence:"
-        )
-        
+        )        
         try:
             # Use LangChain's invoke method for better response handling
             response = self.llm.invoke([system_message, human_message])
@@ -76,9 +78,10 @@ class GoogleADKCoordinator:
             agent_list = [agent.strip() for agent in response.content.strip().split(',')]
             
             # Validate agent names
-            valid_agents = ["spacex_agent", "weather_agent", "summary_agent", "news_agent"]
+            valid_agents = ["spacex_agent", "weather_agent", "calculator_agent", "dictionary_agent", "summary_agent", "news_agent"]
             agent_list = [agent for agent in agent_list if agent in valid_agents]
-              # Ensure we have at least one agent
+            
+            # Ensure we have at least one agent
             if not agent_list:
                 agent_list = ["summary_agent"]
                 
@@ -86,9 +89,13 @@ class GoogleADKCoordinator:
             
         except Exception as e:
             print(f"⚠️ LangChain ADK Planning fallback due to: {e}")
-            # Fallback to simple planning
+            # Fallback to simple planning with trigger word detection
             if any(pattern in goal_lower for pattern in conversational_patterns):
                 return ["summary_agent"]
+            elif any(word in goal_lower for word in ["calculate", "compute", "solve", "math", "equation", "+", "-", "*", "/", "="]):
+                return ["calculator_agent", "summary_agent"]
+            elif any(word in goal_lower for word in ["define", "definition", "meaning", "what is", "what does", "dictionary"]):
+                return ["dictionary_agent", "summary_agent"]
             elif "spacex" in goal_lower and "weather" in goal_lower:
                 return ["spacex_agent", "weather_agent", "summary_agent"]
             elif "spacex" in goal_lower:
