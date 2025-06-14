@@ -2,6 +2,7 @@
 
 import importlib
 from agents import planner
+from agents.google_adk_agent import GoogleADKCoordinator
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -10,18 +11,35 @@ def load_agent(name: str):
     return importlib.import_module(f"agents.{name}")
 
 def run_goal(user_goal: str):
-    sequence = planner.plan(user_goal)
+    # Use Google ADK for intelligent planning
+    try:
+        adk = GoogleADKCoordinator()
+        sequence = adk.plan_agent_sequence(user_goal)
+        print(f"🧠 Google ADK Planner decided the sequence: {sequence}")
+    except Exception as e:
+        print(f"⚠️ Falling back to basic planner due to: {e}")
+        sequence = planner.plan(user_goal)
+        print(f"🧠 Basic Planner decided the sequence: {sequence}")
+    
     data = {"goal": user_goal}
-
-    print(f"🧠 Planner decided the sequence: {sequence}")
 
     for agent_name in sequence:
         agent = load_agent(agent_name)
         data = agent.run(data)
         print(f"✅ {agent_name} output: {data}")
 
+    # Add Google ADK validation at the end
+    try:
+        adk_agent = load_agent("google_adk_agent")
+        data = adk_agent.run(data)
+        print(f"🔍 Google ADK Validation: {data.get('adk_validation', {})}")
+    except Exception as e:
+        print(f"⚠️ ADK validation failed: {e}")
+
     print("\n🎯 Final Result:")
     print(data.get("summary", "No summary available."))
+    
+    return data
 
 if __name__ == "__main__":
     goal = input("Enter your goal: ")
